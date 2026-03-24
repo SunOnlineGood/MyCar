@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>油耗统计表 2.7.1 | 实际油耗明细 + 历史油价对比</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, 'Noto Sans', system-ui, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            color: #1a2c3e;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            padding: 20px 20px 40px;
+            position: relative;
+        }
+        h1 {
+            font-size: 26px;
+            font-weight: 600;
+            margin: 0 0 4px 0;
+            color: #0f5b8c;
+        }
+        .sub {
+            color: #5a6e7c;
+            font-size: 14px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+        .form-card {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e2edf2;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: flex-end;
+        }
+        .form-group {
+            flex: 1 1 160px;
+            min-width: 130px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: #2c5a7a;
+            margin-bottom: 4px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 14px;
+            background: white;
+        }
+        button {
+            background: #2c7cb6;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        button:hover {
+            background: #1f6190;
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .btn-outline {
+            background: white;
+            border: 1px solid #2c7cb6;
+            color: #2c7cb6;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .record-table {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 8px 8px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        th {
+            background: #eef2f6;
+            font-weight: 600;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0 30px;
+        }
+        .stat-card {
+            background: #fef9e6;
+            border-radius: 20px;
+            padding: 14px 18px;
+            border-left: 6px solid #f5b042;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #b55a1a;
+        }
+        .stat-item {
+            margin-bottom: 8px;
+            font-size: 13.5px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed #e2c9a0;
+            padding-bottom: 4px;
+        }
+        .stat-label {
+            font-weight: 500;
+        }
+        .stat-value {
+            font-weight: 700;
+            font-family: monospace;
+        }
+        .season-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 6px;
+        }
+        .season-badge {
+            background: white;
+            border-radius: 40px;
+            padding: 4px 12px;
+            font-size: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .action-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin: 16px 0;
+        }
+        .float-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+        .float-btn {
+            background: #2c7cb6;
+            color: white;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+            border: none;
+            opacity: 0.8;
+        }
+        .float-btn:hover {
+            opacity: 1;
+        }
+        .footer-note {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-align: center;
+            margin-top: 30px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 16px;
+        }
+        @media (max-width: 700px) {
+            .container { padding: 16px; }
+            th, td { font-size: 11px; padding: 6px; }
+            .form-group { min-width: 130px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .float-btn { width: 40px; height: 40px; font-size: 20px; }
+        }
+        /* 双列费用表格样式 */
+        .cost-table {
+            width: 100%;
+            margin-top: 6px;
+        }
+        .cost-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px dashed #e2c9a0;
+        }
+        .cost-row:last-child {
+            border-bottom: none;
+        }
+        .cost-left, .cost-right {
+            flex: 1;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        .cost-left {
+            text-align: left;
+        }
+        .cost-right {
+            text-align: right;
+        }
+        .cost-divider {
+            margin: 0 8px;
+            color: #c0a86a;
+        }
+        @media (max-width: 600px) {
+            .cost-left, .cost-right {
+                font-size: 11px;
+                white-space: normal;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🚗 油耗统计表 2.7.1 · 实际油耗与历史油价对比</h1>
+    <div class="sub">加油记录自动计算实际百公里油耗 | 油价与往年同月对比 | 数据本地存储</div>
+
+    <!-- 统计结果区域（放在表格前面） -->
+    <div id="statsContainer" class="stats-grid"></div>
+
+    <!-- 悬浮按钮 -->
+    <div class="float-buttons">
+        <button class="float-btn" id="goTopBtn" title="回到顶部">↑</button>
+        <button class="float-btn" id="goBottomBtn" title="到底部">↓</button>
+    </div>
+
+    <!-- 添加记录表单 -->
+    <div class="form-card">
+        <div style="font-weight:600; margin-bottom:12px;">📝 添加加油记录 / 观察记录</div>
+        <div class="form-row">
+            <div class="form-group"><label>类型</label>
+                <select id="recordType">
+                    <option value="fuel">⛽ 加油记录</option>
+                    <option value="observe" selected>👀 观察记录 (表显)</option>
+                </select>
+            </div>
+            <div class="form-group"><label>日期</label><input type="date" id="recDate" /></div>
+            <div class="form-group fuel-field" style="display:none;"><label>加油升数(L)</label><input type="number" id="fuelLiters" step="0.01" placeholder="0.00" /></div>
+            <div class="form-group fuel-field" style="display:none;"><label>加油金额(元)</label><input type="number" id="fuelCost" step="0.01" placeholder="0.00" /></div>
+            <div class="form-group"><label>行驶里程(km)*</label><input type="number" id="distance" step="0.01" placeholder="自上次加油后里程" /></div>
+            <div class="form-group fuel-field" style="display:none;"><label>显示总里程(km)</label><input type="number" id="odoKm" step="0.01" placeholder="可选，仅作显示" /></div>
+            <div class="form-group"><label>表显油耗(L/100km)</label><input type="number" id="displayFuel" step="0.1" placeholder="0.0" /></div>
+        </div>
+        <div class="action-bar" style="justify-content:flex-start; margin:0">
+            <button id="addRecordBtn">➕ 添加记录</button>
+            <button id="cancelEditBtn" class="btn-outline" style="display:none;">取消编辑</button>
+        </div>
+        <div style="font-size:12px; color:#5a6e7c; margin-top:8px;">※ 加油记录：行驶里程为自上次加油后的实际行驶距离，用于计算实际油耗。<br>※ 观察记录：仅记录表显油耗和里程增量，不参与油耗计算。<br>※ 显示总里程：选填，仅作记录，不参与任何计算。</div>
+    </div>
+
+    <!-- 数据操作栏 -->
+    <div class="action-bar">
+        <div>
+            <button id="exportBtn" class="btn-secondary">💾 导出数据</button>
+            <button id="importBtn" class="btn-secondary">📂 导入数据</button>
+            <input type="file" id="importFile" accept=".json" style="display:none;" />
+        </div>
+        <button id="clearAllBtn" class="btn-danger">🗑️ 清空所有记录</button>
+    </div>
+
+    <!-- 加油记录表格 -->
+    <div class="record-table">
+        <div style="font-weight:600; margin-bottom:8px;">⛽ 加油记录</div>
+        <table id="fuelTable">
+            <thead>
+                <tr>
+                    <th>日期</th>
+                    <th>加油升数(L)</th>
+                    <th>金额(元)</th>
+                    <th>行驶里程(km)</th>
+                    <th>显示总里程(km)</th>
+                    <th>表显油耗</th>
+                    <th>实际油耗(L/100km)</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="fuelTbody"></tbody>
+        </table>
+    </div>
+
+    <!-- 观察记录表格 -->
+    <div class="record-table" style="margin-top: 20px;">
+        <div style="font-weight:600; margin-bottom:8px;">👀 观察记录（表显油耗与里程增量）</div>
+        <table id="obsTable">
+            <thead>
+                <tr>
+                    <th>日期</th>
+                    <th>行驶里程增量(km)</th>
+                    <th>表显油耗(L/100km)</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="obsTbody"></tbody>
+        </table>
+    </div>
+
+    <div class="footer-note">
+        💡 实际油耗 = 加油升数 ÷ 行驶里程 × 100。每条加油记录独立计算。<br>
+        📊 油价对比：取最近一次加油的油价，与往年同月平均油价比较（无记录则不显示）。<br>
+        🔄 显示总里程仅用于参考，不影响任何统计计算。
+    </div>
+</div>
+
+<script>
+    // ---------- 数据模型 ----------
+    let records = [];
+    let editId = null;
+
+    // DOM元素
+    const recordType = document.getElementById('recordType');
+    const recDate = document.getElementById('recDate');
+    const fuelLiters = document.getElementById('fuelLiters');
+    const fuelCost = document.getElementById('fuelCost');
+    const distance = document.getElementById('distance');
+    const odoKm = document.getElementById('odoKm');
+    const displayFuel = document.getElementById('displayFuel');
+    const addRecordBtn = document.getElementById('addRecordBtn');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const fuelTbody = document.getElementById('fuelTbody');
+    const obsTbody = document.getElementById('obsTbody');
+    const statsContainer = document.getElementById('statsContainer');
+    const exportBtn = document.getElementById('exportBtn');
+    const importBtn = document.getElementById('importBtn');
+    const importFile = document.getElementById('importFile');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const goTopBtn = document.getElementById('goTopBtn');
+    const goBottomBtn = document.getElementById('goBottomBtn');
+
+    // 切换表单字段
+    function toggleFormFields() {
+        const isFuel = recordType.value === 'fuel';
+        document.querySelectorAll('.fuel-field').forEach(el => {
+            el.style.display = isFuel ? 'block' : 'none';
+        });
+        if (!isFuel) {
+            fuelLiters.value = '';
+            fuelCost.value = '';
+            odoKm.value = '';
+        }
+    }
+    recordType.addEventListener('change', toggleFormFields);
+    toggleFormFields();  // 初始根据默认值（观察记录）隐藏加油字段
+
+    function setDefaultDate() {
+        if (!recDate.value) recDate.value = new Date().toISOString().slice(0,10);
+    }
+    setDefaultDate();
+
+    function loadData() {
+        const stored = localStorage.getItem('fuel_stat_records');
+        if (stored) {
+            try {
+                records = JSON.parse(stored);
+                records = records.map(r => ({ ...r, id: r.id || Date.now()+Math.random() }));
+            } catch(e) { records = []; }
+        } else {
+            records = [];
+        }
+        renderTables();
+        renderStats();
+    }
+
+    function saveToLocal() {
+        localStorage.setItem('fuel_stat_records', JSON.stringify(records));
+    }
+
+    function calculateActualFuel(liters, distance) {
+        if (distance && distance > 0 && liters && liters > 0) {
+            return (liters / distance) * 100;
+        }
+        return null;
+    }
+
+    function saveRecord() {
+        const type = recordType.value;
+        const date = recDate.value;
+        if (!date) { alert('请选择日期'); return; }
+
+        if (type === 'fuel') {
+            const liters = parseFloat(fuelLiters.value);
+            const cost = parseFloat(fuelCost.value);
+            const dist = parseFloat(distance.value);
+            if (isNaN(liters) || isNaN(cost) || isNaN(dist)) {
+                alert('加油记录请填写完整：升数、金额、行驶里程'); return;
+            }
+            const newRecord = {
+                id: editId ? editId : Date.now(),
+                type: 'fuel',
+                date,
+                liters: Math.round(liters*100)/100,
+                cost: Math.round(cost*100)/100,
+                distance: Math.round(dist*100)/100,
+                odoKm: odoKm.value ? Math.round(parseFloat(odoKm.value)*100)/100 : null,
+                displayFuel: displayFuel.value ? Math.round(parseFloat(displayFuel.value)*100)/100 : null
+            };
+            if (editId) {
+                const idx = records.findIndex(r => r.id === editId);
+                if (idx !== -1) records[idx] = newRecord;
+                editId = null;
+                addRecordBtn.textContent = '➕ 添加记录';
+                cancelEditBtn.style.display = 'none';
+            } else {
+                records.push(newRecord);
+            }
+        } else {
+            const dist = parseFloat(distance.value);
+            const disp = parseFloat(displayFuel.value);
+            if (isNaN(dist) || isNaN(disp)) {
+                alert('观察记录请填写行驶里程增量和表显油耗'); return;
+            }
+            const newRecord = {
+                id: editId ? editId : Date.now(),
+                type: 'observe',
+                date,
+                distance: Math.round(dist*100)/100,
+                displayFuel: Math.round(disp*100)/100
+            };
+            if (editId) {
+                const idx = records.findIndex(r => r.id === editId);
+                if (idx !== -1) records[idx] = newRecord;
+                editId = null;
+                addRecordBtn.textContent = '➕ 添加记录';
+                cancelEditBtn.style.display = 'none';
+            } else {
+                records.push(newRecord);
+            }
+        }
+        records.sort((a,b) => new Date(a.date) - new Date(b.date));
+        saveToLocal();
+        clearForm();
+        renderTables();
+        renderStats();
+    }
+
+    function clearForm() {
+        setDefaultDate();
+        // 添加记录后默认回到观察记录
+        recordType.value = 'observe';
+        toggleFormFields(); // 立即隐藏加油字段
+        fuelLiters.value = '';
+        fuelCost.value = '';
+        distance.value = '';
+        odoKm.value = '';
+        displayFuel.value = '';
+        editId = null;
+        addRecordBtn.textContent = '➕ 添加记录';
+        cancelEditBtn.style.display = 'none';
+    }
+
+    function editRecord(record) {
+        editId = record.id;
+        recordType.value = record.type;
+        toggleFormFields();
+        recDate.value = record.date;
+        if (record.type === 'fuel') {
+            fuelLiters.value = record.liters;
+            fuelCost.value = record.cost;
+            distance.value = record.distance;
+            odoKm.value = record.odoKm !== null ? record.odoKm : '';
+            displayFuel.value = record.displayFuel !== null ? record.displayFuel : '';
+        } else {
+            distance.value = record.distance;
+            displayFuel.value = record.displayFuel;
+            fuelLiters.value = '';
+            fuelCost.value = '';
+            odoKm.value = '';
+        }
+        addRecordBtn.textContent = '✏️ 更新记录';
+        cancelEditBtn.style.display = 'inline-block';
+    }
+
+    function deleteRecord(id) {
+        if (confirm('删除该记录？')) {
+            records = records.filter(r => r.id !== id);
+            saveToLocal();
+            if (editId === id) clearForm();
+            renderTables();
+            renderStats();
+        }
+    }
+
+    // 获取所有有效的加油记录（用于统计）
+    function getValidFuelRecords() {
+        return records.filter(r => r.type === 'fuel' && r.distance > 0 && r.liters > 0);
+    }
+
+    // 获取所有表显记录（包括加油记录和观察记录）
+    function getAllDisplayFuel() {
+        const values = [];
+        for (let r of records) {
+            if (r.displayFuel !== null && r.displayFuel !== undefined && r.displayFuel > 0) {
+                values.push(r.displayFuel);
+            }
+        }
+        return values;
+    }
+
+    // 辅助：获取季节和跨年冬季的年份标识
+    function getSeasonAndYear(dateStr) {
+        const d = new Date(dateStr);
+        let year = d.getFullYear();
+        const month = d.getMonth() + 1;
+        let season = '';
+        if (month >= 3 && month <= 5) season = '春';
+        else if (month >= 6 && month <= 8) season = '夏';
+        else if (month >= 9 && month <= 11) season = '秋';
+        else if (month === 12) { season = '冬'; year = year; } // 12月归属当年冬季
+        else if (month === 1 || month === 2) { season = '冬'; year = year - 1; } // 1、2月归入前一年冬季
+        return { season, year };
+    }
+
+    // 渲染表格
+    function renderTables() {
+        const fuelRecords = records.filter(r => r.type === 'fuel').sort((a,b)=>new Date(a.date)-new Date(b.date));
+        const observeRecords = records.filter(r => r.type === 'observe').sort((a,b)=>new Date(a.date)-new Date(b.date));
+        if (fuelRecords.length === 0) {
+            fuelTbody.innerHTML = '<tr><td colspan="8">暂无加油记录</td></tr>';
+        } else {
+            let html = '';
+            for (let rec of fuelRecords) {
+                const actual = calculateActualFuel(rec.liters, rec.distance);
+                const actualDisplay = actual ? actual.toFixed(2) : '--';
+                html += `<tr>
+                    <td>${rec.date}</td>
+                    <td>${rec.liters.toFixed(2)}</td>
+                    <td>${rec.cost.toFixed(2)}</td>
+                    <td>${rec.distance.toFixed(2)}</td>
+                    <td>${rec.odoKm ? rec.odoKm.toFixed(2) : '-'}</td>
+                    <td>${rec.displayFuel ? rec.displayFuel.toFixed(2) : '-'}</td>
+                    <td>${actualDisplay}</td>
+                    <td><button class="btn-outline" style="padding:4px 8px;" onclick="editRecordById(${rec.id})">编辑</button> <button class="btn-danger" style="padding:4px 8px;" onclick="deleteRecordById(${rec.id})">删</button></td>
+                </tr>`;
+            }
+            fuelTbody.innerHTML = html;
+        }
+        if (observeRecords.length === 0) {
+            obsTbody.innerHTML = '<tr><td colspan="4">暂无观察记录</td></tr>';
+        } else {
+            let html = '';
+            for (let rec of observeRecords) {
+                html += `<tr>
+                    <td>${rec.date}</td>
+                    <td>${rec.distance.toFixed(2)}</td>
+                    <td>${rec.displayFuel.toFixed(2)}</td>
+                    <td><button class="btn-outline" style="padding:4px 8px;" onclick="editRecordById(${rec.id})">编辑</button> <button class="btn-danger" style="padding:4px 8px;" onclick="deleteRecordById(${rec.id})">删</button></td>
+                </tr>`;
+            }
+            obsTbody.innerHTML = html;
+        }
+    }
+
+    function renderStats() {
+        const validFuel = getValidFuelRecords();
+        const displayList = getAllDisplayFuel();
+
+        // 累计实际油耗和费用（直接累加，避免遗漏）
+        let totalLiters = 0, totalDistance = 0, totalCost = 0;
+        for (let rec of validFuel) {
+            totalLiters += rec.liters;
+            totalDistance += rec.distance;
+            totalCost += rec.cost;
+        }
+        const avgActual = totalDistance > 0 ? (totalLiters / totalDistance) * 100 : 0;
+        const avgCostPerKm = totalDistance > 0 ? totalCost / totalDistance : 0;
+
+        // 表显均值
+        const avgDisplay = displayList.length ? (displayList.reduce((a,b)=>a+b,0)/displayList.length) : null;
+
+        // 总累计里程（基于实际行驶里程累加）
+        let totalOdometer = 0;
+        for (let rec of validFuel) {
+            totalOdometer += rec.distance;
+        }
+
+        // 最后一条加油记录的显示总里程
+        const fuelRecords = records.filter(r=>r.type==='fuel').sort((a,b)=>new Date(a.date)-new Date(b.date));
+        let lastDisplayOdo = null;
+        if (fuelRecords.length) {
+            const last = fuelRecords[fuelRecords.length-1];
+            if (last.odoKm !== null && last.odoKm !== undefined) lastDisplayOdo = last.odoKm;
+        }
+
+        // 本月加油费用
+        const now = new Date();
+        const curYear = now.getFullYear();
+        const curMonth = now.getMonth()+1;
+        const monthCost = fuelRecords.filter(r => {
+            const d = new Date(r.date);
+            return d.getFullYear() === curYear && d.getMonth()+1 === curMonth;
+        }).reduce((s,r)=>s+r.cost,0);
+
+        // 季节平均油耗（基于所有加油记录的实际油耗，跨年）
+        const seasonMap = { 春: [], 夏: [], 秋: [], 冬: [] };
+        for (let rec of validFuel) {
+            const { season } = getSeasonAndYear(rec.date);
+            const actual = (rec.liters / rec.distance) * 100;
+            if (season) {
+                seasonMap[season].push(actual);
+            }
+        }
+        let seasonAvgHtml = '';
+        for (let [season, arr] of Object.entries(seasonMap)) {
+            if (arr.length) {
+                const avg = arr.reduce((a,b)=>a+b,0)/arr.length;
+                seasonAvgHtml += `<span class="season-badge">${season}: ${avg.toFixed(2)} L</span>`;
+            }
+        }
+        if (!seasonAvgHtml) seasonAvgHtml = '无数据';
+
+        // 季节最低（按年份季节平均）
+        const seasonYearAvg = new Map();
+        for (let rec of validFuel) {
+            const { season, year } = getSeasonAndYear(rec.date);
+            if (!season) continue;
+            const key = `${year}-${season}`;
+            const actual = (rec.liters / rec.distance) * 100;
+            if (!seasonYearAvg.has(key)) {
+                seasonYearAvg.set(key, { year, season, total: 0, count: 0 });
+            }
+            const entry = seasonYearAvg.get(key);
+            entry.total += actual;
+            entry.count++;
+        }
+        const seasonYearAverages = [];
+        for (let [key, val] of seasonYearAvg.entries()) {
+            seasonYearAverages.push({
+                year: val.year,
+                season: val.season,
+                avg: val.total / val.count
+            });
+        }
+        const seasonMinMap = { 春: null, 夏: null, 秋: null, 冬: null };
+        for (let item of seasonYearAverages) {
+            const season = item.season;
+            if (!seasonMinMap[season] || item.avg < seasonMinMap[season].avg) {
+                seasonMinMap[season] = { year: item.year, avg: item.avg, season: item.season };
+            }
+        }
+        let seasonMinHtml = '';
+        for (let [season, obj] of Object.entries(seasonMinMap)) {
+            if (obj) {
+                let displayYear = obj.year;
+                if (season === '冬') {
+                    displayYear = `${obj.year}-${obj.year+1}`;
+                }
+                seasonMinHtml += `<span class="season-badge">${displayYear} ${season}: ${obj.avg.toFixed(2)} L</span>`;
+            } else {
+                seasonMinHtml += `<span class="season-badge">${season}: 暂无</span>`;
+            }
+        }
+
+        // 油价对比
+        let oilCompareHtml = '';
+        if (fuelRecords.length) {
+            const last = fuelRecords[fuelRecords.length-1];
+            const lastDate = new Date(last.date);
+            const lastMonth = lastDate.getMonth()+1;
+            const currentPrice = last.cost / last.liters;
+            const yearPriceMap = new Map();
+            for (let rec of fuelRecords) {
+                if (rec.id === last.id) continue;
+                const d = new Date(rec.date);
+                if (d.getMonth()+1 === lastMonth) {
+                    if (!yearPriceMap.has(d.getFullYear())) {
+                        yearPriceMap.set(d.getFullYear(), { totalCost: 0, totalLiters: 0 });
+                    }
+                    const entry = yearPriceMap.get(d.getFullYear());
+                    entry.totalCost += rec.cost;
+                    entry.totalLiters += rec.liters;
+                }
+            }
+            if (yearPriceMap.size) {
+                const comparisons = [];
+                for (let [year, {totalCost, totalLiters}] of yearPriceMap.entries()) {
+                    const avgPrice = totalCost / totalLiters;
+                    const diff = currentPrice - avgPrice;
+                    comparisons.push({ year, avgPrice, diff });
+                }
+                comparisons.sort((a,b)=>a.year - b.year);
+                oilCompareHtml = comparisons.map(c => {
+                    const updown = c.diff >= 0 ? '上涨' : '下降';
+                    return `<span class="season-badge">较 ${c.year}年${lastMonth}月油价 ${c.avgPrice.toFixed(2)} 元/L ${updown} ${Math.abs(c.diff).toFixed(2)} 元/L</span>`;
+                }).join('');
+            } else {
+                oilCompareHtml = '<span>无往年同月数据</span>';
+            }
+        } else {
+            oilCompareHtml = '<span>暂无加油记录</span>';
+        }
+
+        // 月度油耗对比（按月平均）
+        const monthlyAvgMap = new Map(); // key: year-month
+        for (let rec of validFuel) {
+            const d = new Date(rec.date);
+            const year = d.getFullYear();
+            const month = d.getMonth()+1;
+            const key = `${year}-${month}`;
+            const actual = (rec.liters / rec.distance) * 100;
+            if (!monthlyAvgMap.has(key)) {
+                monthlyAvgMap.set(key, { year, month, total: 0, count: 0 });
+            }
+            const entry = monthlyAvgMap.get(key);
+            entry.total += actual;
+            entry.count++;
+        }
+        const monthlyAverages = [];
+        for (let [key, val] of monthlyAvgMap.entries()) {
+            monthlyAverages.push({
+                year: val.year,
+                month: val.month,
+                avg: val.total / val.count
+            });
+        }
+        monthlyAverages.sort((a,b)=> (a.year - b.year) || (a.month - b.month));
+        const currentYearData = monthlyAverages.filter(m => m.year === curYear);
+        let monthCompareHtml = '';
+        for (let m of currentYearData) {
+            const prevYearSame = monthlyAverages.find(p => p.year === curYear-1 && p.month === m.month);
+            if (prevYearSame) {
+                const diff = m.avg - prevYearSame.avg;
+                const trend = diff >= 0 ? '上升' : '下降';
+                monthCompareHtml += `<span class="season-badge">${m.year}年${m.month}月: ${m.avg.toFixed(2)} L/100km (较去年${trend} ${Math.abs(diff).toFixed(2)})</span>`;
+            } else {
+                monthCompareHtml += `<span class="season-badge">${m.year}年${m.month}月: ${m.avg.toFixed(2)} L/100km (无去年对比)</span>`;
+            }
+        }
+        if (!monthCompareHtml) monthCompareHtml = '无本月度数据';
+
+        // 历史月度最低油耗（按月平均）
+        const monthlyMinMap = new Map();
+        for (let m of monthlyAverages) {
+            const month = m.month;
+            if (!monthlyMinMap.has(month) || m.avg < monthlyMinMap.get(month).avg) {
+                monthlyMinMap.set(month, { year: m.year, avg: m.avg });
+            }
+        }
+        let monthlyMinHtml = '';
+        for (let [month, obj] of monthlyMinMap.entries()) {
+            monthlyMinHtml += `<span class="season-badge">${obj.year}年${month}月最低: ${obj.avg.toFixed(2)} L/100km</span>`;
+        }
+        if (!monthlyMinHtml) monthlyMinHtml = '无数据';
+
+        // ---------- 近24个月加油费用（不含当月）----------
+        // 按年份+月份分组加油金额
+        const monthlyCostMap = new Map(); // key: year-month
+        for (let rec of fuelRecords) {
+            const d = new Date(rec.date);
+            const year = d.getFullYear();
+            const month = d.getMonth()+1;
+            const key = `${year}-${month}`;
+            if (!monthlyCostMap.has(key)) {
+                monthlyCostMap.set(key, { year, month, cost: 0 });
+            }
+            monthlyCostMap.get(key).cost += rec.cost;
+        }
+
+        // 生成过去24个月（从当前月的上一个月开始，倒序）
+        const last24Months = [];
+        const currentDate = new Date();
+        for (let i = 1; i <= 24; i++) {
+            const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+            const year = d.getFullYear();
+            const month = d.getMonth() + 1;
+            const key = `${year}-${month}`;
+            const cost = monthlyCostMap.has(key) ? monthlyCostMap.get(key).cost : 0;
+            last24Months.push({ year, month, cost });
+        }
+        // 去重并配对
+        const uniqueMap = new Map();
+        for (let item of last24Months) {
+            const key = `${item.year}-${item.month}`;
+            uniqueMap.set(key, item);
+        }
+        const uniqueMonths = Array.from(uniqueMap.values());
+        uniqueMonths.sort((a,b) => (b.year - a.year) || (b.month - a.month)); // 降序年份和月份
+        const paired = [];
+        for (let current of uniqueMonths) {
+            const lastYearKey = `${current.year-1}-${current.month}`;
+            const lastYearMonth = uniqueMap.get(lastYearKey);
+            if (lastYearMonth) {
+                if (current.year > lastYearMonth.year) {
+                    paired.push({ thisYear: current, lastYear: lastYearMonth });
+                }
+            } else {
+                paired.push({ thisYear: current, lastYear: null });
+            }
+        }
+        paired.sort((a,b) => (b.thisYear.year - a.thisYear.year) || (b.thisYear.month - a.thisYear.month));
+        let monthlyCostHtml = '<div class="cost-table">';
+        for (let pair of paired) {
+            const thisYear = pair.thisYear;
+            const lastYear = pair.lastYear;
+            const leftText = `${thisYear.year}年${thisYear.month}月: ${thisYear.cost.toFixed(2)}元`;
+            const rightText = lastYear ? `${lastYear.year}年${lastYear.month}月: ${lastYear.cost.toFixed(2)}元` : '';
+            monthlyCostHtml += `
+                <div class="cost-row">
+                    <div class="cost-left">${leftText}</div>
+                    <div class="cost-divider">——</div>
+                    <div class="cost-right">${rightText}</div>
+                </div>
+            `;
+        }
+        monthlyCostHtml += '</div>';
+
+        // ---------- 各年份加油总金额 ----------
+        const yearCostMap = new Map(); // year -> total cost
+        for (let rec of fuelRecords) {
+            const year = new Date(rec.date).getFullYear();
+            if (!yearCostMap.has(year)) yearCostMap.set(year, 0);
+            yearCostMap.set(year, yearCostMap.get(year) + rec.cost);
+        }
+        let minYear = fuelRecords.length ? Math.min(...Array.from(yearCostMap.keys())) : curYear;
+        let years = [];
+        for (let y = curYear; y >= minYear; y--) {
+            years.push(y);
+        }
+        let yearCostHtml = '';
+        for (let y of years) {
+            const cost = yearCostMap.get(y);
+            const displayCost = cost !== undefined ? cost.toFixed(2) + ' 元' : '无数据';
+            yearCostHtml += `<div class="stat-item"><span class="stat-label">${y}年：</span><span class="stat-value">${displayCost}</span></div>`;
+        }
+        if (yearCostHtml === '') yearCostHtml = '<div>暂无数据</div>';
+
+        const lastFuel = fuelRecords.length ? fuelRecords[fuelRecords.length-1] : null;
+        const lastPrice = lastFuel ? (lastFuel.cost / lastFuel.liters).toFixed(2) : '--';
+
+        // 比值修正：1 : (实际均值 / 表显均值)
+        let ratioValue = '--';
+        if (avgDisplay && avgDisplay > 0 && avgActual > 0) {
+            ratioValue = (avgActual / avgDisplay).toFixed(2);
+        }
+
+        statsContainer.innerHTML = `
+            <div class="stat-card"><h3>📊 累计统计</h3>
+                <div class="stat-item"><span class="stat-label">显示总里程（最后记录）：</span><span class="stat-value">${lastDisplayOdo !== null ? lastDisplayOdo.toFixed(2) : '--'} km</span></div>
+                <div class="stat-item"><span class="stat-label">累计总里程（实际行驶）：</span><span class="stat-value">${totalOdometer.toFixed(2)} km</span></div>
+                <div class="stat-item"><span class="stat-label">实际百公里油耗均值：</span><span class="stat-value">${avgActual.toFixed(2)} L/100km</span></div>
+                <div class="stat-item"><span class="stat-label">实际每公里费用：</span><span class="stat-value">${avgCostPerKm.toFixed(2)} 元/km</span></div>
+                <div class="stat-item"><span class="stat-label">表显油耗均值：</span><span class="stat-value">${avgDisplay? avgDisplay.toFixed(2)+' L/100km' : '无数据'}</span></div>
+                <div class="stat-item"><span class="stat-label">表显:实际比值：</span><span class="stat-value">1 : ${ratioValue}</span></div>
+                <div style="margin-top:8px;"><strong>各年份加油总金额</strong></div>
+                ${yearCostHtml}
+            </div>
+            <div class="stat-card"><h3>⛽ 月度/季节</h3>
+                <div class="stat-item"><span class="stat-label">本月（${curYear}-${curMonth}）加油总费用：</span><span class="stat-value">${monthCost.toFixed(2)} 元</span></div>
+                <div class="stat-item"><span class="stat-label">四季平均油耗：</span><div class="season-row">${seasonAvgHtml}</div></div>
+                <div class="stat-item"><span class="stat-label">四季最低油耗：</span><div class="season-row">${seasonMinHtml}</div></div>
+                <div class="stat-item"><span class="stat-label">近24个月每月加油费用（不含本月）：</span>${monthlyCostHtml}</div>
+                <div style="font-size:11px; color:#8e9eae; margin-top:6px;">※ 季节划分：春(3-5月) 夏(6-8月) 秋(9-11月) 冬(12-2月，跨年)</div>
+            </div>
+            <div class="stat-card"><h3>📈 油价 & 月度对比</h3>
+                <div class="stat-item"><span class="stat-label">最近油价：</span><span class="stat-value">${lastPrice} 元/L</span></div>
+                <div class="stat-item"><span class="stat-label">往年同月油价对比：</span><div class="season-row">${oilCompareHtml}</div></div>
+                <div class="stat-item"><span class="stat-label">本年度每月油耗对比：</span><div class="season-row">${monthCompareHtml}</div></div>
+                <div class="stat-item"><span class="stat-label">历史月度最低油耗：</span><div class="season-row">${monthlyMinHtml}</div></div>
+            </div>
+        `;
+    }
+
+    window.editRecordById = function(id) {
+        const rec = records.find(r => r.id === id);
+        if (rec) editRecord(rec);
+    };
+    window.deleteRecordById = function(id) {
+        deleteRecord(id);
+    };
+
+    exportBtn.onclick = () => {
+        const dataStr = JSON.stringify(records, null, 2);
+        const blob = new Blob([dataStr], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `fuel_data_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+    importBtn.onclick = () => importFile.click();
+    importFile.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const imported = JSON.parse(ev.target.result);
+                if (Array.isArray(imported)) {
+                    records = imported.map(r => ({ ...r, id: r.id || Date.now()+Math.random() }));
+                    saveToLocal();
+                    renderTables();
+                    renderStats();
+                    alert('导入成功');
+                } else throw new Error();
+            } catch(e) { alert('文件格式错误'); }
+            importFile.value = '';
+        };
+        reader.readAsText(file);
+    };
+    clearAllBtn.onclick = () => {
+        if (confirm('永久删除所有记录？')) {
+            records = [];
+            saveToLocal();
+            clearForm();
+            renderTables();
+            renderStats();
+        }
+    };
+    addRecordBtn.onclick = () => saveRecord();
+    cancelEditBtn.onclick = () => clearForm();
+    goTopBtn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+    goBottomBtn.onclick = () => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+
+    loadData();
+</script>
+</body>
+</html>
