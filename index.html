@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>油耗统计表 2.7.1 | 实际油耗明细 + 历史油价对比</title>
+    <title>油耗统计表 2.8.4 | 实际油耗明细 + 历史油价对比</title>
     <style>
         * {
             box-sizing: border-box;
@@ -211,7 +211,6 @@
             .stats-grid { grid-template-columns: 1fr; }
             .float-btn { width: 40px; height: 40px; font-size: 20px; }
         }
-        /* 双列费用表格样式 */
         .cost-table {
             width: 100%;
             margin-top: 6px;
@@ -247,17 +246,23 @@
                 white-space: normal;
             }
         }
+        .fuel-notes {
+            font-size: 12px;
+            color: #6c7a89;
+            margin: 8px 0 12px 0;
+            padding: 4px 8px;
+            background: #f4f7fc;
+            border-radius: 12px;
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>🚗 油耗统计表 2.7.1 · 实际油耗与历史油价对比</h1>
+    <h1>🚗 油耗统计表 2.8.4 · 实际油耗与历史油价对比</h1>
     <div class="sub">加油记录自动计算实际百公里油耗 | 油价与往年同月对比 | 数据本地存储</div>
 
-    <!-- 统计结果区域（放在表格前面） -->
     <div id="statsContainer" class="stats-grid"></div>
 
-    <!-- 悬浮按钮 -->
     <div class="float-buttons">
         <button class="float-btn" id="goTopBtn" title="回到顶部">↑</button>
         <button class="float-btn" id="goBottomBtn" title="到底部">↓</button>
@@ -287,7 +292,6 @@
         <div style="font-size:12px; color:#5a6e7c; margin-top:8px;">※ 加油记录：行驶里程为自上次加油后的实际行驶距离，用于计算实际油耗。<br>※ 观察记录：仅记录表显油耗和里程增量，不参与油耗计算。<br>※ 显示总里程：选填，仅作记录，不参与任何计算。</div>
     </div>
 
-    <!-- 数据操作栏 -->
     <div class="action-bar">
         <div>
             <button id="exportBtn" class="btn-secondary">💾 导出数据</button>
@@ -300,17 +304,14 @@
     <!-- 加油记录表格 -->
     <div class="record-table">
         <div style="font-weight:600; margin-bottom:8px;">⛽ 加油记录</div>
+        <div class="fuel-notes">
+            💡 实际油耗 = 加油升数 ÷ 行驶里程 × 100。每条加油记录独立计算。<br>
+            🔄 显示总里程仅用于参考，不影响任何统计计算。
+        </div>
         <table id="fuelTable">
             <thead>
                 <tr>
-                    <th>日期</th>
-                    <th>加油升数(L)</th>
-                    <th>金额(元)</th>
-                    <th>行驶里程(km)</th>
-                    <th>显示总里程(km)</th>
-                    <th>表显油耗</th>
-                    <th>实际油耗(L/100km)</th>
-                    <th>操作</th>
+                    <th>日期</th><th>加油升数(L)</th><th>金额(元)</th><th>行驶里程(km)</th><th>显示总里程(km)</th><th>表显油耗</th><th>实际油耗(L/100km)</th><th>操作</th>
                 </tr>
             </thead>
             <tbody id="fuelTbody"></tbody>
@@ -323,10 +324,7 @@
         <table id="obsTable">
             <thead>
                 <tr>
-                    <th>日期</th>
-                    <th>行驶里程增量(km)</th>
-                    <th>表显油耗(L/100km)</th>
-                    <th>操作</th>
+                    <th>日期</th><th>行驶里程增量(km)</th><th>表显油耗(L/100km)</th><th>操作</th>
                 </tr>
             </thead>
             <tbody id="obsTbody"></tbody>
@@ -334,9 +332,7 @@
     </div>
 
     <div class="footer-note">
-        💡 实际油耗 = 加油升数 ÷ 行驶里程 × 100。每条加油记录独立计算。<br>
-        📊 油价对比：取最近一次加油的油价，与往年同月平均油价比较（无记录则不显示）。<br>
-        🔄 显示总里程仅用于参考，不影响任何统计计算。
+        数据本地存储，导出备份，导入恢复。隐私保护已启用 robots.txt 阻止搜索引擎抓取。
     </div>
 </div>
 
@@ -378,7 +374,7 @@
         }
     }
     recordType.addEventListener('change', toggleFormFields);
-    toggleFormFields();  // 初始根据默认值（观察记录）隐藏加油字段
+    toggleFormFields();
 
     function setDefaultDate() {
         if (!recDate.value) recDate.value = new Date().toISOString().slice(0,10);
@@ -473,9 +469,8 @@
 
     function clearForm() {
         setDefaultDate();
-        // 添加记录后默认回到观察记录
         recordType.value = 'observe';
-        toggleFormFields(); // 立即隐藏加油字段
+        toggleFormFields();
         fuelLiters.value = '';
         fuelCost.value = '';
         distance.value = '';
@@ -518,12 +513,10 @@
         }
     }
 
-    // 获取所有有效的加油记录（用于统计）
     function getValidFuelRecords() {
         return records.filter(r => r.type === 'fuel' && r.distance > 0 && r.liters > 0);
     }
 
-    // 获取所有表显记录（包括加油记录和观察记录）
     function getAllDisplayFuel() {
         const values = [];
         for (let r of records) {
@@ -534,7 +527,6 @@
         return values;
     }
 
-    // 辅助：获取季节和跨年冬季的年份标识
     function getSeasonAndYear(dateStr) {
         const d = new Date(dateStr);
         let year = d.getFullYear();
@@ -543,12 +535,11 @@
         if (month >= 3 && month <= 5) season = '春';
         else if (month >= 6 && month <= 8) season = '夏';
         else if (month >= 9 && month <= 11) season = '秋';
-        else if (month === 12) { season = '冬'; year = year; } // 12月归属当年冬季
-        else if (month === 1 || month === 2) { season = '冬'; year = year - 1; } // 1、2月归入前一年冬季
+        else if (month === 12) { season = '冬'; year = year; }
+        else if (month === 1 || month === 2) { season = '冬'; year = year - 1; }
         return { season, year };
     }
 
-    // 渲染表格
     function renderTables() {
         const fuelRecords = records.filter(r => r.type === 'fuel').sort((a,b)=>new Date(a.date)-new Date(b.date));
         const observeRecords = records.filter(r => r.type === 'observe').sort((a,b)=>new Date(a.date)-new Date(b.date));
@@ -588,11 +579,60 @@
         }
     }
 
+    // 生成近24个月费用展示（12行，每行两列，同月年份对比，从curMonth-2开始，不含本月及上月）
+    function buildMonthlyCostGrid() {
+        const fuelRecords = records.filter(r => r.type === 'fuel');
+        const monthlyCostMap = new Map();
+        for (let rec of fuelRecords) {
+            const d = new Date(rec.date);
+            const year = d.getFullYear();
+            const month = d.getMonth() + 1;
+            const key = `${year}-${month}`;
+            if (!monthlyCostMap.has(key)) monthlyCostMap.set(key, { year, month, cost: 0 });
+            monthlyCostMap.get(key).cost += rec.cost;
+        }
+
+        const now = new Date();
+        const curYear = now.getFullYear();
+        const curMonth = now.getMonth() + 1;
+        
+        // 获取当前月之前的24个月（不含本月及上月），从curMonth-2开始往前推24个月
+        const monthsList = [];
+        for (let i = 2; i <= 25; i++) {
+            const targetDate = new Date(curYear, curMonth - i, 1);
+            const year = targetDate.getFullYear();
+            const month = targetDate.getMonth() + 1;
+            const key = `${year}-${month}`;
+            const cost = monthlyCostMap.has(key) ? monthlyCostMap.get(key).cost : 0;
+            monthsList.push({ year, month, cost });
+        }
+        
+        // 将24个月分成两组：前12个月（最近12个月）和后12个月（更早12个月）
+        const recent12 = monthsList.slice(0, 12);
+        const earlier12 = monthsList.slice(12, 24);
+        
+        let html = '<div class="cost-table">';
+        for (let i = 0; i < 12; i++) {
+            const left = recent12[i];
+            const right = earlier12[i];
+            const leftText = `${left.year}年${left.month}月: ${left.cost.toFixed(2)}元`;
+            const rightText = right ? `${right.year}年${right.month}月: ${right.cost.toFixed(2)}元` : '暂无数据';
+            html += `
+                <div class="cost-row">
+                    <div class="cost-left">${leftText}</div>
+                    <div class="cost-divider">——</div>
+                    <div class="cost-right">${rightText}</div>
+                </div>
+            `;
+        }
+        html += '</div>';
+        return html;
+    }
+
     function renderStats() {
         const validFuel = getValidFuelRecords();
         const displayList = getAllDisplayFuel();
 
-        // 累计实际油耗和费用（直接累加，避免遗漏）
         let totalLiters = 0, totalDistance = 0, totalCost = 0;
         for (let rec of validFuel) {
             totalLiters += rec.liters;
@@ -602,16 +642,26 @@
         const avgActual = totalDistance > 0 ? (totalLiters / totalDistance) * 100 : 0;
         const avgCostPerKm = totalDistance > 0 ? totalCost / totalDistance : 0;
 
-        // 表显均值
+        // 近三月统计
+        const now = new Date();
+        const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+        const recentRecords = validFuel.filter(rec => new Date(rec.date) >= threeMonthsAgo);
+        let recentLiters = 0, recentDistance = 0, recentCost = 0;
+        for (let rec of recentRecords) {
+            recentLiters += rec.liters;
+            recentDistance += rec.distance;
+            recentCost += rec.cost;
+        }
+        const recentAvgFuel = recentDistance > 0 ? (recentLiters / recentDistance) * 100 : null;
+        const recentAvgCostPerKm = recentDistance > 0 ? recentCost / recentDistance : null;
+
         const avgDisplay = displayList.length ? (displayList.reduce((a,b)=>a+b,0)/displayList.length) : null;
 
-        // 总累计里程（基于实际行驶里程累加）
         let totalOdometer = 0;
         for (let rec of validFuel) {
             totalOdometer += rec.distance;
         }
 
-        // 最后一条加油记录的显示总里程
         const fuelRecords = records.filter(r=>r.type==='fuel').sort((a,b)=>new Date(a.date)-new Date(b.date));
         let lastDisplayOdo = null;
         if (fuelRecords.length) {
@@ -619,8 +669,6 @@
             if (last.odoKm !== null && last.odoKm !== undefined) lastDisplayOdo = last.odoKm;
         }
 
-        // 本月加油费用
-        const now = new Date();
         const curYear = now.getFullYear();
         const curMonth = now.getMonth()+1;
         const monthCost = fuelRecords.filter(r => {
@@ -628,14 +676,11 @@
             return d.getFullYear() === curYear && d.getMonth()+1 === curMonth;
         }).reduce((s,r)=>s+r.cost,0);
 
-        // 季节平均油耗（基于所有加油记录的实际油耗，跨年）
         const seasonMap = { 春: [], 夏: [], 秋: [], 冬: [] };
         for (let rec of validFuel) {
             const { season } = getSeasonAndYear(rec.date);
             const actual = (rec.liters / rec.distance) * 100;
-            if (season) {
-                seasonMap[season].push(actual);
-            }
+            if (season) seasonMap[season].push(actual);
         }
         let seasonAvgHtml = '';
         for (let [season, arr] of Object.entries(seasonMap)) {
@@ -646,7 +691,6 @@
         }
         if (!seasonAvgHtml) seasonAvgHtml = '无数据';
 
-        // 季节最低（按年份季节平均）
         const seasonYearAvg = new Map();
         for (let rec of validFuel) {
             const { season, year } = getSeasonAndYear(rec.date);
@@ -679,16 +723,13 @@
         for (let [season, obj] of Object.entries(seasonMinMap)) {
             if (obj) {
                 let displayYear = obj.year;
-                if (season === '冬') {
-                    displayYear = `${obj.year}-${obj.year+1}`;
-                }
+                if (season === '冬') displayYear = `${obj.year}-${obj.year+1}`;
                 seasonMinHtml += `<span class="season-badge">${displayYear} ${season}: ${obj.avg.toFixed(2)} L</span>`;
             } else {
                 seasonMinHtml += `<span class="season-badge">${season}: 暂无</span>`;
             }
         }
 
-        // 油价对比
         let oilCompareHtml = '';
         if (fuelRecords.length) {
             const last = fuelRecords[fuelRecords.length-1];
@@ -727,8 +768,7 @@
             oilCompareHtml = '<span>暂无加油记录</span>';
         }
 
-        // 月度油耗对比（按月平均）
-        const monthlyAvgMap = new Map(); // key: year-month
+        const monthlyAvgMap = new Map();
         for (let rec of validFuel) {
             const d = new Date(rec.date);
             const year = d.getFullYear();
@@ -765,7 +805,6 @@
         }
         if (!monthCompareHtml) monthCompareHtml = '无本月度数据';
 
-        // 历史月度最低油耗（按月平均）
         const monthlyMinMap = new Map();
         for (let m of monthlyAverages) {
             const month = m.month;
@@ -779,70 +818,9 @@
         }
         if (!monthlyMinHtml) monthlyMinHtml = '无数据';
 
-        // ---------- 近24个月加油费用（不含当月）----------
-        // 按年份+月份分组加油金额
-        const monthlyCostMap = new Map(); // key: year-month
-        for (let rec of fuelRecords) {
-            const d = new Date(rec.date);
-            const year = d.getFullYear();
-            const month = d.getMonth()+1;
-            const key = `${year}-${month}`;
-            if (!monthlyCostMap.has(key)) {
-                monthlyCostMap.set(key, { year, month, cost: 0 });
-            }
-            monthlyCostMap.get(key).cost += rec.cost;
-        }
+        const monthlyCostHtml = buildMonthlyCostGrid();
 
-        // 生成过去24个月（从当前月的上一个月开始，倒序）
-        const last24Months = [];
-        const currentDate = new Date();
-        for (let i = 1; i <= 24; i++) {
-            const d = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-            const year = d.getFullYear();
-            const month = d.getMonth() + 1;
-            const key = `${year}-${month}`;
-            const cost = monthlyCostMap.has(key) ? monthlyCostMap.get(key).cost : 0;
-            last24Months.push({ year, month, cost });
-        }
-        // 去重并配对
-        const uniqueMap = new Map();
-        for (let item of last24Months) {
-            const key = `${item.year}-${item.month}`;
-            uniqueMap.set(key, item);
-        }
-        const uniqueMonths = Array.from(uniqueMap.values());
-        uniqueMonths.sort((a,b) => (b.year - a.year) || (b.month - a.month)); // 降序年份和月份
-        const paired = [];
-        for (let current of uniqueMonths) {
-            const lastYearKey = `${current.year-1}-${current.month}`;
-            const lastYearMonth = uniqueMap.get(lastYearKey);
-            if (lastYearMonth) {
-                if (current.year > lastYearMonth.year) {
-                    paired.push({ thisYear: current, lastYear: lastYearMonth });
-                }
-            } else {
-                paired.push({ thisYear: current, lastYear: null });
-            }
-        }
-        paired.sort((a,b) => (b.thisYear.year - a.thisYear.year) || (b.thisYear.month - a.thisYear.month));
-        let monthlyCostHtml = '<div class="cost-table">';
-        for (let pair of paired) {
-            const thisYear = pair.thisYear;
-            const lastYear = pair.lastYear;
-            const leftText = `${thisYear.year}年${thisYear.month}月: ${thisYear.cost.toFixed(2)}元`;
-            const rightText = lastYear ? `${lastYear.year}年${lastYear.month}月: ${lastYear.cost.toFixed(2)}元` : '';
-            monthlyCostHtml += `
-                <div class="cost-row">
-                    <div class="cost-left">${leftText}</div>
-                    <div class="cost-divider">——</div>
-                    <div class="cost-right">${rightText}</div>
-                </div>
-            `;
-        }
-        monthlyCostHtml += '</div>';
-
-        // ---------- 各年份加油总金额 ----------
-        const yearCostMap = new Map(); // year -> total cost
+        const yearCostMap = new Map();
         for (let rec of fuelRecords) {
             const year = new Date(rec.date).getFullYear();
             if (!yearCostMap.has(year)) yearCostMap.set(year, 0);
@@ -850,9 +828,7 @@
         }
         let minYear = fuelRecords.length ? Math.min(...Array.from(yearCostMap.keys())) : curYear;
         let years = [];
-        for (let y = curYear; y >= minYear; y--) {
-            years.push(y);
-        }
+        for (let y = curYear; y >= minYear; y--) years.push(y);
         let yearCostHtml = '';
         for (let y of years) {
             const cost = yearCostMap.get(y);
@@ -864,7 +840,6 @@
         const lastFuel = fuelRecords.length ? fuelRecords[fuelRecords.length-1] : null;
         const lastPrice = lastFuel ? (lastFuel.cost / lastFuel.liters).toFixed(2) : '--';
 
-        // 比值修正：1 : (实际均值 / 表显均值)
         let ratioValue = '--';
         if (avgDisplay && avgDisplay > 0 && avgActual > 0) {
             ratioValue = (avgActual / avgDisplay).toFixed(2);
@@ -876,6 +851,8 @@
                 <div class="stat-item"><span class="stat-label">累计总里程（实际行驶）：</span><span class="stat-value">${totalOdometer.toFixed(2)} km</span></div>
                 <div class="stat-item"><span class="stat-label">实际百公里油耗均值：</span><span class="stat-value">${avgActual.toFixed(2)} L/100km</span></div>
                 <div class="stat-item"><span class="stat-label">实际每公里费用：</span><span class="stat-value">${avgCostPerKm.toFixed(2)} 元/km</span></div>
+                <div class="stat-item"><span class="stat-label">近三月百公里油耗：</span><span class="stat-value">${recentAvgFuel !== null ? recentAvgFuel.toFixed(2) + ' L/100km' : '无数据'}</span></div>
+                <div class="stat-item"><span class="stat-label">近三月每公里费用：</span><span class="stat-value">${recentAvgCostPerKm !== null ? recentAvgCostPerKm.toFixed(2) + ' 元/km' : '无数据'}</span></div>
                 <div class="stat-item"><span class="stat-label">表显油耗均值：</span><span class="stat-value">${avgDisplay? avgDisplay.toFixed(2)+' L/100km' : '无数据'}</span></div>
                 <div class="stat-item"><span class="stat-label">表显:实际比值：</span><span class="stat-value">1 : ${ratioValue}</span></div>
                 <div style="margin-top:8px;"><strong>各年份加油总金额</strong></div>
@@ -885,7 +862,7 @@
                 <div class="stat-item"><span class="stat-label">本月（${curYear}-${curMonth}）加油总费用：</span><span class="stat-value">${monthCost.toFixed(2)} 元</span></div>
                 <div class="stat-item"><span class="stat-label">四季平均油耗：</span><div class="season-row">${seasonAvgHtml}</div></div>
                 <div class="stat-item"><span class="stat-label">四季最低油耗：</span><div class="season-row">${seasonMinHtml}</div></div>
-                <div class="stat-item"><span class="stat-label">近24个月每月加油费用（不含本月）：</span>${monthlyCostHtml}</div>
+                <div class="stat-item"><span class="stat-label">近24个月每月加油费用（不含本月及上月，同月年份对比）：</span>${monthlyCostHtml}</div>
                 <div style="font-size:11px; color:#8e9eae; margin-top:6px;">※ 季节划分：春(3-5月) 夏(6-8月) 秋(9-11月) 冬(12-2月，跨年)</div>
             </div>
             <div class="stat-card"><h3>📈 油价 & 月度对比</h3>
@@ -893,6 +870,7 @@
                 <div class="stat-item"><span class="stat-label">往年同月油价对比：</span><div class="season-row">${oilCompareHtml}</div></div>
                 <div class="stat-item"><span class="stat-label">本年度每月油耗对比：</span><div class="season-row">${monthCompareHtml}</div></div>
                 <div class="stat-item"><span class="stat-label">历史月度最低油耗：</span><div class="season-row">${monthlyMinHtml}</div></div>
+                <div style="font-size:12px; color:#8e9eae; margin-top:8px;">📊 油价对比：取最近一次加油的油价，与往年同月平均油价比较（无记录则不显示）。</div>
             </div>
         `;
     }
