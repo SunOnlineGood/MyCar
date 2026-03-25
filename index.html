@@ -254,6 +254,22 @@
             background: #f4f7fc;
             border-radius: 12px;
         }
+        /* 新增样式：让“近24个月费用”文字居中并在表格上方 */
+        .above-text {
+            text-align: center;
+            font-weight: bold;
+            margin: 0.8rem 0 0.4rem 0;
+            font-size: 0.95rem;
+        }
+        .cost-table-wrapper {
+            margin-top: 0.25rem;
+        }
+        @media (max-width: 768px) {
+            .above-text {
+                font-size: 0.85rem;
+                margin: 0.6rem 0 0.3rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -310,9 +326,7 @@
         </div>
         <table id="fuelTable">
             <thead>
-                <tr>
-                    <th>日期</th><th>加油升数(L)</th><th>金额(元)</th><th>行驶里程(km)</th><th>显示总里程(km)</th><th>表显油耗</th><th>实际油耗(L/100km)</th><th>操作</th>
-                </tr>
+                <tr><th>日期</th><th>加油升数(L)</th><th>金额(元)</th><th>行驶里程(km)</th><th>显示总里程(km)</th><th>表显油耗</th><th>实际油耗(L/100km)</th><th>操作</th></tr>
             </thead>
             <tbody id="fuelTbody"></tbody>
         </table>
@@ -322,11 +336,7 @@
     <div class="record-table" style="margin-top: 20px;">
         <div style="font-weight:600; margin-bottom:8px;">👀 观察记录（表显油耗与里程增量）</div>
         <table id="obsTable">
-            <thead>
-                <tr>
-                    <th>日期</th><th>行驶里程增量(km)</th><th>表显油耗(L/100km)</th><th>操作</th>
-                </tr>
-            </thead>
+            <thead><tr><th>日期</th><th>行驶里程增量(km)</th><th>表显油耗(L/100km)</th><th>操作</th></tr></thead>
             <tbody id="obsTbody"></tbody>
         </table>
     </div>
@@ -862,7 +872,9 @@
                 <div class="stat-item"><span class="stat-label">本月（${curYear}-${curMonth}）加油总费用：</span><span class="stat-value">${monthCost.toFixed(2)} 元</span></div>
                 <div class="stat-item"><span class="stat-label">四季平均油耗：</span><div class="season-row">${seasonAvgHtml}</div></div>
                 <div class="stat-item"><span class="stat-label">四季最低油耗：</span><div class="season-row">${seasonMinHtml}</div></div>
-                <div class="stat-item"><span class="stat-label">近24个月每月加油费用（不含本月及上月，同月年份对比）：</span>${monthlyCostHtml}</div>
+                <!-- 调整：文字移到表格上方，并添加专门样式类 -->
+                <div class="stat-label above-text">近24个月每月加油费用（不含本月，同月年份对比）：</div>
+                <div class="cost-table-wrapper">${monthlyCostHtml}</div>
                 <div style="font-size:11px; color:#8e9eae; margin-top:6px;">※ 季节划分：春(3-5月) 夏(6-8月) 秋(9-11月) 冬(12-2月，跨年)</div>
             </div>
             <div class="stat-card"><h3>📈 油价 & 月度对比</h3>
